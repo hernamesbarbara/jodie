@@ -1,5 +1,9 @@
 ## Jodie is a command line tool to quickly save new contacts to Contacts.app on macOS
 
+save macOS contacts to Apple's Contacts.app from command line.
+
+`Jodie` is named for for [Jodie Foster](https://en.wikipedia.org/wiki/Jodie_Foster) for her stellar performance in the movie[ Contact](<https://en.wikipedia.org/wiki/Contact_(1997_American_film)>).
+
 this is a work in progress.
 
 basically it's a python wrapper around Apple's `objc` python package.
