@@ -1,0 +1,5 @@
+pyobjc==10.2
+pyobjc-core==10.2
+pyobjc-framework-AddressBook==10.2
+pyobjc-framework-Contacts==10.2
+pyobjc-framework-ContactsUI==10.2
