@@ -36,3 +36,21 @@ python -m jodie.jodiecli
 - probably need to bundle the whole project as an Apple macOS app to get security and privacy entitlement to read/write to that field
 
 https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_developer_contacts_notes
+
+###
+
+#### Build `jodie` executable with Apple entitlements
+
+```
+# clone the repo
+# run the pyinstaller build script
+# you will need to get an Apple developer application certificate
+# and update the build script accordingly for this to work
+# this is how you grant all the privileges to `jodie` for accessing Contacts.app
+
+
+# this build script will save and sign `dist/jodie` executable
+./pyinstaller-build/pyinstaller-build.sh
+
+
+```

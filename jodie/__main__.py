@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
+"""
+Main command-line interface to jodie.
+"""
+from jodie import __version__
 from jodie import Contact
 
 
 def parse_args():
-    # i'll add a command line tool later
-    # for now this is just a stub / dummy data
-    # similar to the way it'll look from docopt
+    """
+    i'll add a command line tool later for now this is just 
+    a stub / dummy data similar to the way it'll look from docopt
+    """
+
     return {
         'first': 'John999999',
         'last': 'Doe99',
@@ -17,7 +23,9 @@ def parse_args():
     }
 
 
-def main():
+def run():
+    """ main function for jodie
+    """
     data = parse_args()
     first, last, email, phone, title, company, website = data.values()
 
@@ -35,4 +43,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run()
