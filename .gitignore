@@ -135,3 +135,4 @@ pip-wheel-metadata/
 *.cert
 *.key
 *.entitlements
+encoded_certificate.txt
