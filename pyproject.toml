@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jodie"
+license = {text = "MIT"}
+version = "0.1.0"
+description = "Jodie lets you add contacts to Contacts.app on macOS from command line"
+authors = [{name = "austin", email = "tips@cia.lol"}]
+keywords = ["macOS", "Contacts.app", "Contact management", "Contacts", "command line tool"]
+
+[project.urls]
+Homepage = "https://github.com/hernamesbarbara/jodie"
+
+[project.scripts]
+jodie = "jodie.__main__:run"

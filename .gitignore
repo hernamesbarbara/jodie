@@ -138,3 +138,7 @@ pip-wheel-metadata/
 *.p12
 
 encoded_certificate.txt
+pyinstaller-build/encoded_certificate.txt
+tmp/
+.tmp/
+poetry.lock
