@@ -13,5 +13,9 @@ keywords = ["macOS", "Contacts.app", "Contact management", "Contacts", "command 
 [project.urls]
 Homepage = "https://github.com/hernamesbarbara/jodie"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["jodie*"]
+
 [project.scripts]
 jodie = "jodie.__main__:run"
