@@ -27,10 +27,8 @@ pip install .
 
 ### Build with PyInstaller
 
-This will sign the macOS bundle with Apple entitlements. But you need an Apple Developer ID Application.
+**TODO**
 
-```
-# build with pyinstaller by running this script
-./pyinstaller-build/pyinstaller-build.sh
+I'm working on a homebrew tap to allow you to install `jodie` with homebrew.
 
-```
+Seems like the only way to be able to sign the code with Apple entitlements for interacting with Contacts.app.
