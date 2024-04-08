@@ -142,3 +142,4 @@ pyinstaller-build/encoded_certificate.txt
 tmp/
 .tmp/
 poetry.lock
+pyinstaller/
