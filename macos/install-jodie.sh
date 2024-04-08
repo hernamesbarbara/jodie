@@ -14,5 +14,6 @@ codesign \
     --force \
     dist/jodie
 
+# https://forums.developer.apple.com/forums/thread/86161
 # codesign --remove-signature dist/jodie
 # codesign -dv --verbose=4 dist/jodie
