@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# jodie/__main__.py
 """
 Main command-line interface to jodie.
 """
