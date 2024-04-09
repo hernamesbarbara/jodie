@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # test_jodie.py
 import jodie
+# from jodie import __main__
 
 
 def parse_args():
@@ -27,3 +28,6 @@ print(jodie.parsers.EmailParser.parse(raw_text))
 print(jodie.parsers.JodieParser.parse(raw_text))
 
 print(jodie.parsers.NameParser.parse(f"this is random text {raw_text}"))
+
+# data = parse_args()
+# first, last, email, phone, title, company, website = data.values()

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# jodie/parsers/nameparser.py
 from .baseparser import BaseParser
 from .emailparser import EmailParser
 
