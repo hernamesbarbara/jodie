@@ -1,7 +1,47 @@
 #!/usr/bin/env python3
-# jodie/parsers/nameparser.py
-from .baseparser import BaseParser
-from .emailparser import EmailParser
+# jodie/parsers/baseparser.py
+import re
+
+
+class BaseParser:
+    """
+    Base class for parsing text into specific contact properties.
+    """
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def find_matches(pattern, text):
+        """
+        Find all matches of a regex pattern in the given text.
+
+        :param pattern: Regex pattern to match against the text.
+        :param text: The text to search in.
+        :return: A list of all matches.
+        """
+        return re.findall(pattern, text)
+
+    @classmethod
+    def parse(cls, text):
+        """
+        Parse the given text to extract information.
+        This method should be implemented by subclasses.
+
+        :param text: The text to parse.
+        :return: Extracted information.
+        """
+        raise NotImplementedError("Subclasses must implement this method.")
+
+
+class EmailParser(BaseParser):
+    @classmethod
+    def parse(cls, text):
+        # email regex should handle with or without angled brackets
+        # e.g. John von Doe99 <john.vondoe99@gmail.com> or John von Doe99 john.vondoe99@gmail.com
+        email_pattern = r'<?(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b)>?'
+        emails = cls.find_matches(email_pattern, text)
+        return emails[0] if emails else None
 
 
 class NameParser(BaseParser):

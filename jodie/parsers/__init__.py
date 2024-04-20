@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
 # jodie/parsers/__init__.py
-from .nameparser import NameParser
-from .emailparser import EmailParser
-from .jodieparser import JodieParser
+from jodie.parsers.parsers import BaseParser, EmailParser, NameParser
+
+__all__ = ("BaseParser", "EmailParser", "NameParser",)
