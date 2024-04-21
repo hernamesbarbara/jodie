@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # jodie/cli/__init__.py
+from jodie.cli.__main__ import main
 
 DEFAULT_FIELDS = ('--name', '--email',)
 
