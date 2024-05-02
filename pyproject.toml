@@ -18,4 +18,4 @@ where = ["."]
 include = ["jodie*"]
 
 [project.scripts]
-jodie = "jodie.cli.__main__:main"
+jodie-cli = "jodie.cli.__main__:main"
