@@ -71,7 +71,7 @@ def main():
             sys.exit(1)
         company = args.get('COMPANY')
         title = args.get('TITLE')
-        # notes = args.get('NOTES')
+        notes = args.get('NOTES')
 
     elif mode == "named":
         try:
@@ -80,7 +80,7 @@ def main():
             email = args.get('--email')
             company = args.get('--company')
             title = args.get('--title')
-            # notes = args.get('--notes')
+            notes = args.get('--notes')
         except Exception as e:
             sys.stderr.write(f"Error processing named arguments: {str(e)}\n")
             sys.exit(1)

@@ -70,10 +70,8 @@ class Contact:
             self.company = company
         if website:
             self.website = website
-
-        # Note handling is omitted as it's noted to be currently problematic.
-        # if note:
-        #     self.note = note
+        if note and note.strip():
+            self.note = note.strip()
 
         # Apple Contacts.app doesnt display created date by default
         # save the created date in a custom field
@@ -194,3 +192,11 @@ class Contact:
             self.contact.setUrlAddresses_([websiteValue])
         else:
             self.contact.setUrlAddresses_([])
+
+    @property
+    def note(self):
+        return self.contact.note()
+
+    @note.setter
+    def note(self, value):
+        self.contact.setNote_(value.strip())
