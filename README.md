@@ -62,6 +62,6 @@ jodie-cli new \
     --company "AcmeCo Inc" \
     --title "Founder" \
     --website "https://example.com" \
-    --phone "+1 555 555 5555"\
+    --phone "+1 555 555 5555"
 
 ```
