@@ -8,7 +8,7 @@ this is a work in progress.
 
 ## Installation
 
-Clone the repo from Github: [hernamesbarbara/jodie](https://github.com/hernamesbarbara/jodie)
+clone 
 
 ```
 # Clone the repo
@@ -17,42 +17,51 @@ cd jodie/
 pip install .
 ```
 
-#### Test that you have the CLI installed
+#### Usage
 
 ```
-~ jodie --help
-jodie.
+jodie-cli --help
+jodie - Manage macOS Contacts.app from command line!
 
 Usage:
-    jodie [options] TEXT
-    jodie [options] EMAIL NAME...
+    jodie new [EMAIL NAME COMPANY TITLE NOTE...]
+    jodie new [options]
+    jodie parse [options] TEXT
 
 Arguments:
-    TEXT                   Text you want jodie to attempt to parse contact information from.
-    EMAIL                  Email address for the contact you want to create.
-    NAME                   Full name for the contact you want to create.
+    EMAIL                               Email address for the contact you want to create.
+    NAME                                Full name for the contact you want to create.
+    COMPANY                             Company name.
+    TITLE                               Job title.
+    NOTE                                Any text you want to save in the `Note` field in Contacts.app.
+    TEXT                                Text for jodie to try her best to parse semi-intelligently if she can.
 
 Options:
-    -D --defaults          Try to parse all default contact fields. [default: True]
-    -N --name              Full name of the user. [default: True]
-    -F --first             First name of the user.
-    -L --last              Last name of the user.
-    -E --email             Email address of the user. [default: True]
-    -P --phone             Phone number of the user.
-    -T --title             Job title of the user.
-    -C --company           Company name where the user is employed.
-    -W --website           Website URL of the company.
-    -H --help              Show this screen.
-    -V --version           Show version.
+    -C COMPANY --company=COMPANY        Company name.
+    -E EMAIL --email=EMAIL              Email.
+    -F FIRST --first=FIRST              First name.
+    -L LAST --last=LAST                 Last name.
+    -N NOTE --note=NOTE                 Any text you want to save in the `Note` field in Contacts.app.
+    -P PHONE --phone=PHONE              Phone.
+    -T TITLE --title=TITLE              Job title.
+    -X TEXT  --text=TEXT                Text for jodie to try her best to parse semi-intelligently if she can.
+    -U NAME --full-name=NAME            Full name.
+    -W WEBSITE --website=WEBSITE        Website / URL.
+    -H --help                           Show this screen.
+    -V --version                        Show version.
 
 ```
 
 #### Save a new Contact to macOS Address Book / Contacts.app
 
 ```
-jodie john99.doe999@gmail.com John99 von Doe99
-Saving...
-Contact: John99 Von Doe99, Email: john99.doe999@gmail.com, Phone: None, Job Title: , Company: , Website: None
-Contact saved successfully!
+jodie-cli new \
+    --email "john99.doe99@gmail.com" \
+    --first john99 \
+    --last doe99 \
+    --company "AcmeCo Inc" \
+    --title "Founder" \
+    --website "https://example.com" \
+    --phone "+1 555 555 5555"\
 
 ```
