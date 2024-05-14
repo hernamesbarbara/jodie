@@ -49,9 +49,13 @@ def detect_argument_mode(args):
         return "positional"  # Early return if help or version is called
 
     # Identify if any specific named options are used
-    named_options = {key: args[key] for key in args.keys(
-    ) if key.startswith('--') and key not in NOT_ARGS}
-    return "named" if any(named_options.values()) else "positional"
+    named_options = {key: args[key] for key in args.keys() 
+                     if key.startswith('--') and key not in NOT_ARGS}
+    
+    if any(named_options.values()):
+        return "named" 
+    else:
+        return "positional"
 
 
 def main():
