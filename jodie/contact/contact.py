@@ -159,21 +159,17 @@ class Contact:
 
     @phone.setter
     def phone(self, value):
-        # Remove all unwanted characters, but keep digits and plus sign
         cleaned_number = ''.join(
             ch for ch in value if ch.isdigit() or ch == '+')
 
         label = "mobile"
 
-        # Create the CNPhoneNumber object
         phone_number = CNPhoneNumber.phoneNumberWithStringValue_(
             cleaned_number)
 
-        # Create the labeled value
         phone_label_value = CNLabeledValue.alloc().initWithLabel_value_(
             label, phone_number)
 
-        # Set the phone number with the new labeled value
         self.contact.setPhoneNumbers_([phone_label_value])
 
     @property
