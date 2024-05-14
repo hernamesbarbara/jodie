@@ -56,20 +56,20 @@ class Contact:
             note (str, optional): Additional notes for the contact.
         """
         self.contact = CNMutableContact.new()
-        if first_name:
-            self.first_name = first_name
-        if last_name:
-            self.last_name = last_name
-        if email:
-            self.email = email
-        if phone:
-            self.phone = phone
-        if job_title:
-            self.job_title = job_title
-        if company:
-            self.company = company
-        if website:
-            self.website = website
+        if first_name and first_name.strip():
+            self.first_name = first_name.strip()
+        if last_name and last_name.strip():
+            self.last_name = last_name.strip()
+        if email and email.strip():
+            self.email = email.strip()
+        if phone and phone.strip():
+            self.phone = phone.strip()
+        if job_title and job_title.strip():
+            self.job_title = job_title.strip()
+        if company and company.strip():
+            self.company = company.strip()
+        if website and website.strip():
+            self.website = website.strip()
         if note and note.strip():
             self.note = note.strip()
 
