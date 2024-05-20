@@ -27,11 +27,11 @@ Options:
     -E EMAIL --email=EMAIL              Email.
     -F FIRST --first=FIRST              First name.
     -L LAST --last=LAST                 Last name.
+    -U NAME --full-name=NAME            Full name.
     -N NOTE --note=NOTE                 Any text you want to save in the `Note` field in Contacts.app.
     -P PHONE --phone=PHONE              Phone.
     -T TITLE --title=TITLE              Job title.
-    -X TEXT  --text=TEXT                Text for jodie to try her best to parse semi-intelligently if she can.
-    -U NAME --full-name=NAME            Full name.
+    -X TEXT  --text=TEXT                Text for jodie to try her best to parse semi-intelligently if she can.    
     -W WEBSITE --website=WEBSITE        Website / URL.
     -H --help                           Show this screen.
     -V --version                        Show version.
@@ -79,6 +79,13 @@ def main():
         try:
             first = args.get('--first')
             last = args.get('--last')
+            full = args.get('--full-name')
+            if full:
+                parts = full.split()
+                if first is None:
+                    first = parts[0].strip()
+                if last is None:
+                    last = ' '.join(parts[1:]).strip()
             email = args.get('--email')
             phone = args.get('--phone')
             title = args.get('--title')
