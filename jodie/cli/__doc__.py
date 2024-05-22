@@ -30,3 +30,15 @@ Options:
     -V --version                        Show version.
 
 """
+
+__version__     = '0.1.0'
+__title__       = "jodie"
+__license__     = "MIT"
+__description__ = "Jodie lets you add contacts to Contacts.app on macOS from command line"
+__keywords__    = "macOS Contacts.app Contact management Contacts command line tool CLI"
+__author__      = "austin"
+__email__       = "tips@cia.lol"
+__url__         = "https://github.com/hernamesbarbara/jodie"
+
+
+__all__ = ['__version__', '__description__', '__url__', '__doc__']
