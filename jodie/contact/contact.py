@@ -70,6 +70,10 @@ class Contact:
             self.company = company.strip()
         if website and website.strip():
             self.website = website.strip()
+        
+        # TODO this is broken until i can figure out Apple entitlements
+        # TODO https://developer.apple.com/documentation/contacts/requesting-authorization-to-access-contacts
+        # TODO https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_developer_contacts_notes
         if note and note.strip():
             self.note = note.strip()
 
@@ -115,10 +119,6 @@ class Contact:
                 f"Website: {self.website}")
 
     def __repr__(self):
-        """
-        Return an unambiguous string representation of the contact,
-        potentially usable for recreating the object.
-        """
         return (f"{self.__class__.__name__}(first_name={self.first_name!r}, "
                 f"last_name={self.last_name!r}, email={self.email!r}, "
                 f"phone={self.phone!r}, job_title={self.job_title!r}, "
@@ -195,6 +195,10 @@ class Contact:
 
     @website.setter
     def website(self, value):
+        """Set the website. Right now the default behavior is just to set the label to 'Home'. 
+        Could be enhanced w/ simple logic to set Work, LinkedIn, Calendar, Home, or Other dynamically. 
+        e.g. `if the website.contains('linkedin.com') then set the label to 'linkedin' etc.
+        """
         if value:
             websiteValue = CNLabeledValue.alloc().initWithLabel_value_(
                 CNLabelURLAddressHomePage, value.strip().lower())
@@ -204,8 +208,10 @@ class Contact:
 
     @property
     def note(self):
+        # TODO this is broken until i can figure out Apple entitlements
         return self.contact.note()
 
     @note.setter
     def note(self, value):
+        # TODO this is broken until i can figure out Apple entitlements
         self.contact.setNote_(value.strip())

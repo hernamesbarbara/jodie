@@ -54,6 +54,9 @@ Options:
 
 #### Save a new Contact to macOS Address Book / Contacts.app
 
+
+##### Example 1 
+
 ```
 jodie-cli new \
     --email "john99.doe99@gmail.com" \
@@ -63,5 +66,19 @@ jodie-cli new \
     --title "Founder" \
     --website "https://example.com" \
     --phone "+1 555 555 5555"
+
+```
+
+
+##### Example 2
+
+```
+jodie-cli new \
+    --email "john99.doe99@gmail.com" \
+    --full-name "john999 doe999" \
+    --company "AcmeCo Inc" \
+    --title "Founder" \
+    --website "https://example.com" \
+    --note "this is my horse."
 
 ```
