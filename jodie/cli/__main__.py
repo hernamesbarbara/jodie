@@ -45,13 +45,11 @@ def parse_auto(arguments):
             email = jodie.parsers.EmailParser.parse(arg)
             if email:
                 detected_fields["email"] = email
-                print(f"Classified {arg} as email.")
                 # Infer name from mailbox format if name is not already set
                 if not detected_fields["name"]:
                     first_name, last_name = jodie.parsers.NameParser.parse(arg)
                     if first_name or last_name:
                         detected_fields["name"] = f"{first_name} {last_name}".strip()
-                        print(f"Inferred name from email: {detected_fields['name']}")
                 continue
 
         # Check for website.
@@ -59,14 +57,12 @@ def parse_auto(arguments):
             website = jodie.parsers.WebsiteParser.parse(arg)
             if website:
                 detected_fields["website"] = website
-                print(f"Classified {arg} as website.")
                 continue
 
         # Check for company only if it's not already set.
         if not detected_fields["company"]:
             if "inc" in arg.lower() or "llc" in arg.lower():
                 detected_fields["company"] = arg.strip()
-                print(f"Classified {arg} as company.")
                 continue
 
         # Check for title only if it's not already set.
@@ -74,7 +70,6 @@ def parse_auto(arguments):
             title = jodie.parsers.TitleParser.parse(arg)
             if title:
                 detected_fields["title"] = title
-                print(f"Classified {arg} as title.")
                 continue
 
         # Check for name only if it's not already set.
@@ -82,15 +77,14 @@ def parse_auto(arguments):
             first_name, last_name = jodie.parsers.NameParser.parse(arg)
             if first_name or last_name:
                 detected_fields["name"] = f"{first_name} {last_name}".strip()
-                print(f"Classified {arg} as name.")
                 continue
 
         # Fallback for unclassified arguments.
         if not detected_fields["company"]:
             detected_fields["company"] = arg
-            print(f"Classified {arg} as company (fallback).")
         else:
             print(f"Unclassified argument: {arg}")  # Log for debugging.
+            detected_fields["company"] = 'JODIE: UNK'
 
     return detected_fields
 
@@ -102,9 +96,7 @@ def main():
     mode = detect_argument_mode(args)
 
     if mode == "auto":
-        print("Auto mode activated.")
         fields = parse_auto(args['TEXT'])
-        print(fields)
         if fields:
             if fields.get('name'):
                 human_name = HumanName(fields['name'])
