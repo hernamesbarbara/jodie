@@ -9,6 +9,10 @@ version = "0.1.0"
 description = "Jodie lets you add contacts to Contacts.app on macOS from command line"
 authors = [{name = "austin", email = "tips@cia.lol"}]
 keywords = ["macOS", "Contacts.app", "Contact management", "Contacts", "command line tool"]
+dependencies = [
+  'docopt~=0.6.2',
+  nameparser==1.1.3,
+]
 
 [project.urls]
 Homepage = "https://github.com/hernamesbarbara/jodie"

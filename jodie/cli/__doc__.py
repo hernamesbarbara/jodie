@@ -5,6 +5,7 @@
 Usage: 
     jodie new [EMAIL NAME COMPANY TITLE NOTE...]
     jodie new [options]
+    jodie new --auto TEXT...
     jodie parse [options] TEXT
 
 Arguments:
@@ -16,6 +17,7 @@ Arguments:
     TEXT                                Text for jodie to try her best to parse semi-intelligently if she can.
 
 Options:
+    -A --auto                           Automatically guess fields from provided text.
     -C COMPANY --company=COMPANY        Company name.
     -E EMAIL --email=EMAIL              Email.
     -F FIRST --first=FIRST              First name.

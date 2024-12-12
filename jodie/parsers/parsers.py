@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # jodie/parsers/baseparser.py
 import re
-
+from nameparser import HumanName
 
 class BaseParser:
     """
@@ -37,42 +37,85 @@ class BaseParser:
 class EmailParser(BaseParser):
     @classmethod
     def parse(cls, text):
-        # email regex should handle with or without angled brackets
-        # e.g. John von Doe99 <john.vondoe99@gmail.com> or John von Doe99 john.vondoe99@gmail.com
-        email_pattern = r'<?(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b)>?'
-        emails = cls.find_matches(email_pattern, text)
-        return emails[0] if emails else None
+        """
+        Extracts a single email from the text.
+        Returns the first valid match or None.
+        """
+        email_pattern = r'<(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b)>' \
+                        r'|(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b)'
+        matches = cls.find_matches(email_pattern, text)
+        for match in matches:
+            # Return the first non-empty match
+            if isinstance(match, tuple):
+                return next((item for item in match if item), None)
+            return match
+        return None
+
+
+class TitleParser(BaseParser):
+    # Extend COMMON_TITLES with dataset insights
+    COMMON_TITLES = {
+        "ceo", "cto", "co-founder", "founder", "director", "manager", "engineer",
+        "president", "vice-president", "consultant", "advisor", "chief",
+        "specialist", "developer", "partner", "head", "lead", "co-ceo"
+    }
+
+    @classmethod
+    def parse(cls, text):
+        """
+        Enhanced title parsing:
+        - Standardizes capitalization for common titles.
+        """
+        if not isinstance(text, str) or not text.strip():
+            return None
+
+        # Normalize text
+        cleaned_text = text.strip().lower()
+
+        # Match against common titles
+        if cleaned_text in cls.COMMON_TITLES:
+            return cleaned_text.upper()  # Standardize capitalization
+
+        return None
+
+
+
+class WebsiteParser(BaseParser):
+    @classmethod
+    def parse(cls, text):
+        # Match typical URL patterns
+        url_pattern = r'https?://[^\s]+|www\.[^\s]+'
+        urls = cls.find_matches(url_pattern, text)
+        return urls[0] if urls else None
 
 
 class NameParser(BaseParser):
     @classmethod
     def parse(cls, text):
-        email = EmailParser.parse(text)
+        """
+        Parse a name from the given text.
+        - If an email is present in mailbox format, extract the portion before the email.
+        - Use the `nameparser` package to parse the extracted name.
 
-        # If an email is found, use the part of the text before the email for name parsing.
-        # e.g. John von Doe99 <john.vondoe99@gmail.com>
-        # this will find the email and assume the left hand side of the email is the full name
+        :param text: The text to parse.
+        :return: A tuple of (first_name, last_name).
+        """
+        # Check for email in the text.
+        email = EmailParser.parse(text)
         if email:
-            # Find the part before the email address; remove the angled brackets if they are present.
+            # Extract the portion of text before the email for name parsing.
             name_portion_index = text.find(email)
             name_portion = text[:name_portion_index].strip()
-            # Further cleaning to remove any leading/trailing special characters that might have been part of the email format.
-            name_portion = name_portion.rstrip('<').rstrip().title()
+            name_portion = name_portion.rstrip('<').strip()
         else:
-            # If no email is found, use the entire text as the name portion.
-            name_portion = text.strip().title()
+            # Use the entire text if no email is found.
+            name_portion = text.strip()
 
         if not name_portion:
             return "", ""
 
-        words = name_portion.split()
+        # Use the `HumanName` class to parse the name intelligently.
+        name = HumanName(name_portion)
 
-        first_name = words[0] if words else ""
-
-        if len(words) > 1:
-            last_name = " ".join(words[1:])  # Join the last name
-            last_name = last_name[:255]  # Truncate if longer than 255 chars
-        else:
-            last_name = ""
-
-        return first_name, last_name
+        # Return the first and last names as a tuple.
+        return name.first, f"{name.middle} {name.last}".strip()
