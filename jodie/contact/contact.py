@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # jodie/contact/contact.py
 from datetime import datetime
+from typing import Optional, Set, List, Any
 import objc
 from Contacts import (CNMutableContact, CNContactStore, CNSaveRequest, CNLabeledValue,
                       CNPhoneNumber, CNLabelURLAddressHomePage)
 from Foundation import NSCalendar, NSDateComponents
 
 
-def get_label_for_email(email):
+def get_label_for_email(email: str) -> str:
     """
     Determine the label for an email address based on its domain.
 
@@ -18,7 +19,7 @@ def get_label_for_email(email):
         str: "work" if the email domain is neither a common webmail provider nor an educational institution (.edu),
              otherwise "home".
     """
-    webmail_providers = {
+    webmail_providers: Set[str] = {
         "gmail.com", "googlemail.com", "aol.com", "yahoo.com",
         "hotmail.co.uk", "hotmail.com", "hotmail.de", "hotmail.es",
         "hotmail.fr", "hotmail.it", "hushmail.com", "protonmail.com",
@@ -27,7 +28,7 @@ def get_label_for_email(email):
     }
 
     # Extract the email's domain
-    email_domain = email.split('@')[-1] if email else ""
+    email_domain: str = email.split('@')[-1] if email else ""
 
     # Check domain against webmail providers and education domains (.edu)
     if email_domain not in webmail_providers and not email_domain.endswith('.edu'):
@@ -36,26 +37,102 @@ def get_label_for_email(email):
         return "home"
 
 
+def get_label_for_website(url: str, email: Optional[str] = None, company: Optional[str] = None) -> str:
+    """
+    Determine the appropriate label for a website URL based on its domain, email, and company information.
+
+    Args:
+        url (str): The website URL to analyze.
+        email (str, optional): The contact's email address to check for domain matching.
+        company (str, optional): The contact's company name to check for domain matching.
+
+    Returns:
+        str: A label constant from Contacts framework (CNLabelURLAddress*) or a custom label string.
+    """
+    # Common professional/social networks
+    professional_domains = {
+        'linkedin.com': 'LinkedIn',
+        'github.com': 'GitHub',
+        'twitter.com': 'Twitter',
+        'instagram.com': 'Instagram',
+        'facebook.com': 'Facebook',
+    }
+
+    # Common calendar/scheduling domains
+    calendar_domains = {
+        'calendly.com': 'Calendar',
+        'meet.google.com': 'Calendar',
+        'zoom.us': 'Calendar',
+    }
+
+    # Extract the domain from the URL
+    try:
+        # Remove protocol and www if present
+        domain = url.lower().replace('https://', '').replace('http://', '').replace('www.', '')
+        # Get the domain part
+        domain = domain.split('/')[0]
+    except:
+        # If URL parsing fails, default to homepage
+        return CNLabelURLAddressHomePage
+
+    # Rule 1: Check against known professional/social networks
+    for known_domain, label in professional_domains.items():
+        if known_domain in domain:
+            return label
+
+    # Rule 2: Check against known calendar domains
+    for known_domain, label in calendar_domains.items():
+        if known_domain in domain:
+            return label
+
+    # Rule 3: If email is work and domains match, set website to work
+    if email:
+        email_domain = email.split('@')[-1].lower()
+        if get_label_for_email(email) == "work" and email_domain in domain:
+            return "Work"
+
+    # Rule 4: If email is home/webmail and company name exists, check for company name in domain
+    if email and company and get_label_for_email(email) == "home":
+        # Split company name into words and check if any appear in domain
+        company_words = company.lower().split()
+        if any(word in domain for word in company_words):
+            return "Work"
+
+    # Rule 5: Fallback to homepage
+    return CNLabelURLAddressHomePage
+
+
 class Contact:
     """
     Simple wrapper for Apple iOS / macOS Contact record.
+    Provides a Pythonic interface to interact with Apple's Contacts framework.
     """
 
-    def __init__(self, first_name=None, last_name=None, email=None, phone=None, job_title=None, company=None, website=None, note=None):
+    def __init__(
+        self,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        email: Optional[str] = None,
+        phone: Optional[str] = None,
+        job_title: Optional[str] = None,
+        company: Optional[str] = None,
+        website: Optional[str] = None,
+        note: Optional[str] = None
+    ) -> None:
         """
         Initialize a Contact object with optional parameters for various contact fields.
 
-        Parameters:
-            first_name (str, optional): First name of the contact.
-            last_name (str, optional): Last name of the contact.
-            email (str, optional): Email address of the contact.
-            phone (str, optional): Phone number of the contact.
-            job_title (str, optional): Job title of the contact.
-            company (str, optional): Company name of the contact.
-            website (str, optional): Website URL of the contact.
-            note (str, optional): Additional notes for the contact.
+        Args:
+            first_name: First name of the contact
+            last_name: Last name of the contact
+            email: Email address of the contact
+            phone: Phone number of the contact
+            job_title: Job title of the contact
+            company: Company name of the contact
+            website: Website URL of the contact
+            note: Additional notes for the contact
         """
-        self.contact = CNMutableContact.new()
+        self.contact: CNMutableContact = CNMutableContact.new()
         if first_name and first_name.strip():
             self.first_name = first_name.strip()
         if last_name and last_name.strip():
@@ -79,139 +156,299 @@ class Contact:
 
         # Apple Contacts.app doesnt display created date by default
         # save the created date in a custom field
-        self._created_date = datetime.now()
+        self._created_date: datetime = datetime.now()
         self._set_creation_date()
 
-    def _set_creation_date(self):
+    def _set_creation_date(self) -> None:
         """
         Set the creation date for the contact using the current date and store it as a custom date field.
         """
-        dateComponents = NSDateComponents.alloc().init()
+        dateComponents: NSDateComponents = NSDateComponents.alloc().init()
         dateComponents.setYear_(self._created_date.year)
         dateComponents.setMonth_(self._created_date.month)
         dateComponents.setDay_(self._created_date.day)
-        customDateValue = CNLabeledValue.alloc().initWithLabel_value_(
+        customDateValue: CNLabeledValue = CNLabeledValue.alloc().initWithLabel_value_(
             "created_date", dateComponents)
         self.contact.setDates_([customDateValue])
 
-    def save(self):
+    def save(self) -> 'Contact':
         """
         Validate required fields and try to save to Contacts.app / Apple Address Book.
+
+        Returns:
+            Contact: The saved contact instance
+
+        Raises:
+            ValueError: If required fields (first name, last name, email) are missing
+            Exception: If the save operation fails
         """
         if not all([self.contact.givenName(), self.contact.familyName(), self.contact.emailAddresses()]):
             raise ValueError(
                 "Missing required fields. First name, last name, and email are required.")
 
-        store = CNContactStore.alloc().init()
-        request = CNSaveRequest.alloc().init()
+        store: CNContactStore = CNContactStore.alloc().init()
+        request: CNSaveRequest = CNSaveRequest.alloc().init()
         request.addContact_toContainerWithIdentifier_(self.contact, None)
 
-        error = objc.nil
+        error: Any = objc.nil
         success, error = store.executeSaveRequest_error_(request, None)
         if not success:
             raise Exception(f"Failed to save contact: {error}")
         return self
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"Contact: {self.first_name} {self.last_name}, "
                 f"Email: {self.email}, Phone: {self.phone}, "
                 f"Job Title: {self.job_title}, Company: {self.company}, "
                 f"Website: {self.website}")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"{self.__class__.__name__}(first_name={self.first_name!r}, "
                 f"last_name={self.last_name!r}, email={self.email!r}, "
                 f"phone={self.phone!r}, job_title={self.job_title!r}, "
                 f"company={self.company!r}, website={self.website!r})")
 
     @property
-    def first_name(self):
+    def first_name(self) -> Optional[str]:
+        """Get the contact's first name."""
         return self.contact.givenName()
 
     @first_name.setter
-    def first_name(self, value):
+    def first_name(self, value: str) -> None:
+        """Set the contact's first name."""
         self.contact.setGivenName_(value.strip().title())
 
     @property
-    def last_name(self):
+    def last_name(self) -> Optional[str]:
+        """Get the contact's last name."""
         return self.contact.familyName()
 
     @last_name.setter
-    def last_name(self, value):
+    def last_name(self, value: str) -> None:
+        """Set the contact's last name."""
         self.contact.setFamilyName_(value.strip().title())
 
     @property
-    def email(self):
-        emailAddresses = self.contact.emailAddresses()
+    def email(self) -> Optional[str]:
+        """Get the contact's primary email address."""
+        emailAddresses: List[CNLabeledValue] = self.contact.emailAddresses()
         return emailAddresses[0].value() if emailAddresses else None
 
     @email.setter
-    def email(self, value):
-        email_label = get_label_for_email(value)
-        emailValue = CNLabeledValue.alloc().initWithLabel_value_(
+    def email(self, value: str) -> None:
+        """Set the contact's email address with appropriate label based on domain."""
+        email_label: str = get_label_for_email(value)
+        emailValue: CNLabeledValue = CNLabeledValue.alloc().initWithLabel_value_(
             email_label, value.strip().lower())
         self.contact.setEmailAddresses_([emailValue])
 
     @property
-    def phone(self):
-        phoneNumbers = self.contact.phoneNumbers()
+    def phone(self) -> Optional[str]:
+        """Get the contact's primary phone number."""
+        phoneNumbers: List[CNLabeledValue] = self.contact.phoneNumbers()
         return phoneNumbers[0].value().stringValue() if phoneNumbers else None
 
     @phone.setter
-    def phone(self, value):
-        cleaned_number = ''.join(
+    def phone(self, value: str) -> None:
+        """Set the contact's phone number with mobile label."""
+        cleaned_number: str = ''.join(
             ch for ch in value if ch.isdigit() or ch == '+')
 
-        label = "mobile"
+        label: str = "mobile"
 
-        phone_number = CNPhoneNumber.phoneNumberWithStringValue_(
+        phone_number: CNPhoneNumber = CNPhoneNumber.phoneNumberWithStringValue_(
             cleaned_number)
 
-        phone_label_value = CNLabeledValue.alloc().initWithLabel_value_(
+        phone_label_value: CNLabeledValue = CNLabeledValue.alloc().initWithLabel_value_(
             label, phone_number)
 
         self.contact.setPhoneNumbers_([phone_label_value])
 
     @property
-    def job_title(self):
+    def job_title(self) -> Optional[str]:
+        """Get the contact's job title."""
         return self.contact.jobTitle()
 
     @job_title.setter
-    def job_title(self, value):
+    def job_title(self, value: str) -> None:
+        """Set the contact's job title."""
         self.contact.setJobTitle_(value.strip().title())
 
     @property
-    def company(self):
+    def company(self) -> Optional[str]:
+        """Get the contact's company name."""
         return self.contact.organizationName()
 
     @company.setter
-    def company(self, value):
+    def company(self, value: str) -> None:
+        """Set the contact's company name."""
         self.contact.setOrganizationName_(value.strip().title())
 
     @property
-    def website(self):
-        urlAddresses = self.contact.urlAddresses()
+    def website(self) -> Optional[str]:
+        """Get the contact's website URL."""
+        urlAddresses: List[CNLabeledValue] = self.contact.urlAddresses()
         return urlAddresses[0].value() if urlAddresses else None
 
     @website.setter
-    def website(self, value):
-        """Set the website. Right now the default behavior is just to set the label to 'Home'. 
-        Could be enhanced w/ simple logic to set Work, LinkedIn, Calendar, Home, or Other dynamically. 
-        e.g. `if the website.contains('linkedin.com') then set the label to 'linkedin' etc.
-        """
+    def website(self, value: str) -> None:
+        """Set the contact's website URL with appropriate label based on the URL content, email, and company."""
         if value:
-            websiteValue = CNLabeledValue.alloc().initWithLabel_value_(
-                CNLabelURLAddressHomePage, value.strip().lower())
+            websiteValue: CNLabeledValue = CNLabeledValue.alloc().initWithLabel_value_(
+                get_label_for_website(value, self.email, self.company), value.strip().lower())
             self.contact.setUrlAddresses_([websiteValue])
         else:
             self.contact.setUrlAddresses_([])
 
     @property
-    def note(self):
-        # TODO this is broken until i can figure out Apple entitlements
+    def note(self) -> Optional[str]:
+        """Get the contact's notes.
+        
+        Note:
+            This functionality is currently broken due to Apple entitlements requirements.
+        """
         return self.contact.note()
 
     @note.setter
-    def note(self, value):
-        # TODO this is broken until i can figure out Apple entitlements
+    def note(self, value: str) -> None:
+        """Set the contact's notes.
+        
+        Note:
+            This functionality is currently broken due to Apple entitlements requirements.
+        """
         self.contact.setNote_(value.strip())
+
+    def __dict__(self) -> dict:
+        """
+        Return a dictionary representation of the contact.
+        
+        Returns:
+            dict: A dictionary containing all contact fields and their values.
+                 Empty fields are returned as None.
+                 Created date is formatted as YYYY-MM-DD.
+        """
+        def get_value_or_none(value):
+            return value if value and value.strip() else None
+
+        return {
+            'first_name': get_value_or_none(self.first_name),
+            'last_name': get_value_or_none(self.last_name),
+            'email': get_value_or_none(self.email),
+            'phone': get_value_or_none(self.phone),
+            'job_title': get_value_or_none(self.job_title),
+            'company': get_value_or_none(self.company),
+            'website': get_value_or_none(self.website),
+            'note': get_value_or_none(self.note),
+            'created_date': self._created_date.strftime('%Y-%m-%d')
+        }
+
+    def tojson(self) -> dict:
+        """
+        Return a JSON-serializable dictionary representation of the contact.
+        
+        Returns:
+            dict: A dictionary containing all contact fields and their values,
+                  with datetime objects converted to ISO format strings.
+        """
+        return self.__dict__()
+
+def test_website_labels():
+    test_cases = [
+        # Social/Professional Networks
+        ("https://linkedin.com/in/johndoe", None, None, "LinkedIn"),
+        ("https://github.com/johndoe", None, None, "GitHub"),
+        ("https://twitter.com/johndoe", None, None, "Twitter"),
+
+        # Calendar Links
+        ("https://calendly.com/johndoe", None, None, "Calendar"),
+        ("https://meet.google.com/abc-xyz", None, None, "Calendar"),
+
+        # Work Email Domain Match
+        ("https://acme.com", "john@acme.com", None, "Work"),  # work email
+        ("https://acme.com", "john@gmail.com", None, CNLabelURLAddressHomePage),  # personal email
+
+        # Company Name Match
+        ("https://acme-corp.com", "john@gmail.com", "Acme Corp", "Work"),  # company name in domain
+        ("https://acme.com", "john@gmail.com", "Acme Corp", "Work"),  # company name in domain
+        ("https://other.com", "john@gmail.com", "Acme Corp", CNLabelURLAddressHomePage),  # no match
+
+        # Multiple URLs for same contact
+        ("https://acme.com", "john@acme.com", "Acme Corp", "Work"),  # work website
+        ("https://linkedin.com/in/johndoe", "john@acme.com", "Acme Corp", "LinkedIn"),  # LinkedIn profile
+
+        # Edge Cases
+        ("invalid-url", None, None, CNLabelURLAddressHomePage),  # invalid URL
+        ("", None, None, CNLabelURLAddressHomePage),  # empty URL
+        (None, None, None, CNLabelURLAddressHomePage),  # None URL
+    ]
+
+    print("Testing website label determination:")
+    print("-" * 80)
+
+    for url, email, company, expected in test_cases:
+        result = get_label_for_website(url, email, company)
+        status = "✓" if result == expected else "✗"
+        print(f"{status} URL: {url}")
+        print(f"   Email: {email}")
+        print(f"   Company: {company}")
+        print(f"   Expected: {expected}")
+        print(f"   Got: {result}")
+        print("-" * 80)
+
+    # Test __dict__ and tojson methods
+    print("\nTesting Contact.__dict__ and Contact.tojson methods:")
+    print("-" * 80)
+
+    # Test case 1: Complete contact information
+    contact1 = Contact(
+        first_name="John",
+        last_name="Doe",
+        email="john@acme.com",
+        phone="+1-555-123-4567",
+        job_title="Software Engineer",
+        company="Acme Corp",
+        website="https://acme.com",
+        note="Met at conference"
+    )
+    
+    # Test case 2: Minimal contact information
+    contact2 = Contact(
+        first_name="Jane",
+        last_name="Smith",
+        email="jane@gmail.com"
+    )
+
+    test_contacts = [
+        ("Complete Contact", contact1),
+        ("Minimal Contact", contact2)
+    ]
+
+    for name, contact in test_contacts:
+        print(f"\nTesting {name}:")
+        print("-" * 40)
+        
+        # Test __dict__ method
+        contact_dict = contact.__dict__()
+        print("__dict__() result:")
+        for key, value in contact_dict.items():
+            print(f"  {key}: {value}")
+        
+        # Test tojson method
+        contact_json = contact.tojson()
+        print("\ntojson() result:")
+        for key, value in contact_json.items():
+            print(f"  {key}: {value}")
+        
+        # Verify both methods return the same data
+        assert contact_dict == contact_json, f"__dict__ and tojson returned different results for {name}"
+        print("\n✓ __dict__ and tojson results match")
+        
+        # Verify all values are JSON-serializable
+        import json
+        try:
+            json.dumps(contact_json)
+            print("✓ JSON serialization successful")
+        except (TypeError, ValueError) as e:
+            print(f"✗ JSON serialization failed: {e}")
+        
+        print("-" * 40)
