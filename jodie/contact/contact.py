@@ -103,10 +103,14 @@ def get_label_for_website(url: str, email: Optional[str] = None, company: Option
 
 
 class WebsiteLabeledValue(CNLabeledValue):
-    """Wrapper for CNLabeledValue that provides a better string representation."""
+    """Wrapper for CNLabeledValue that provides a better string representation and additional functionality."""
     
     def __repr__(self) -> str:
         return f"Website(label={self.label()!r}, url={self.value()!r})"
+    
+    def to_dict(self) -> Dict[str, str]:
+        """Convert to a dictionary representation."""
+        return {"label": self.label(), "url": self.value()}
 
 
 class Contact:
@@ -321,10 +325,10 @@ class Contact:
             self.contact.setUrlAddresses_([])
             return
 
-        # Convert to list of CNLabeledValue objects
+        # Convert to list of WebsiteLabeledValue objects
         if isinstance(value, str):
             label = get_label_for_website(value, self.email, self.company)
-            value = [CNLabeledValue.alloc().initWithLabel_value_(label, value.strip().lower())]
+            value = [WebsiteLabeledValue.alloc().initWithLabel_value_(label, value.strip().lower())]
         elif isinstance(value, list):
             if not value:
                 self.contact.setUrlAddresses_([])
@@ -335,7 +339,7 @@ class Contact:
                 url_values = []
                 for url in value:
                     label = get_label_for_website(url, self.email, self.company)
-                    url_value = CNLabeledValue.alloc().initWithLabel_value_(
+                    url_value = WebsiteLabeledValue.alloc().initWithLabel_value_(
                         label, url.strip().lower())
                     url_values.append(url_value)
                 value = url_values
@@ -345,11 +349,18 @@ class Contact:
                 for item in value:
                     url = item["url"]
                     label = item.get("label") or get_label_for_website(url, self.email, self.company)
-                    url_value = CNLabeledValue.alloc().initWithLabel_value_(
+                    url_value = WebsiteLabeledValue.alloc().initWithLabel_value_(
                         label, url.strip().lower())
                     url_values.append(url_value)
                 value = url_values
-            # If it's already a list of CNLabeledValue objects, use it as is
+            elif isinstance(value[0], CNLabeledValue):
+                # Convert existing CNLabeledValue objects to WebsiteLabeledValue
+                url_values = []
+                for site in value:
+                    url_value = WebsiteLabeledValue.alloc().initWithLabel_value_(
+                        site.label(), site.value())
+                    url_values.append(url_value)
+                value = url_values
 
         self.contact.setUrlAddresses_(value)
 
@@ -358,7 +369,7 @@ class Contact:
         current = self.websites or []
         if not label:
             label = get_label_for_website(url, self.email, self.company)
-        websiteValue = CNLabeledValue.alloc().initWithLabel_value_(
+        websiteValue = WebsiteLabeledValue.alloc().initWithLabel_value_(
             label, url.strip().lower())
         current.append(websiteValue)
         self.contact.setUrlAddresses_(current)
@@ -419,7 +430,7 @@ class Contact:
             if isinstance(value, str):
                 return value if value.strip() else None
             if isinstance(value, list):
-                return [{"label": item.label(), "url": item.value()} for item in value] if value else None
+                return [item.to_dict() for item in value] if value else None
             return value
 
         return {
