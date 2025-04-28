@@ -26,6 +26,7 @@ jodie - Manage macOS Contacts.app from command line!
 Usage:
     jodie new [EMAIL NAME COMPANY TITLE NOTE...]
     jodie new [options]
+    jodie new --auto TEXT...
     jodie parse [options] TEXT
 
 Arguments:
@@ -37,16 +38,17 @@ Arguments:
     TEXT                                Text for jodie to try her best to parse semi-intelligently if she can.
 
 Options:
+    -A --auto                           Automatically guess fields from provided text.
     -C COMPANY --company=COMPANY        Company name.
     -E EMAIL --email=EMAIL              Email.
     -F FIRST --first=FIRST              First name.
     -L LAST --last=LAST                 Last name.
+    -U NAME --full-name=NAME            Full name.
     -N NOTE --note=NOTE                 Any text you want to save in the `Note` field in Contacts.app.
     -P PHONE --phone=PHONE              Phone.
     -T TITLE --title=TITLE              Job title.
     -X TEXT  --text=TEXT                Text for jodie to try her best to parse semi-intelligently if she can.
-    -U NAME --full-name=NAME            Full name.
-    -W WEBSITES --websites=WEBSITES        Website / URL.
+    -W WEBSITES --websites=WEBSITES     Comma-separated list of websites/URLs (e.g. "https://linkedin.com/in/johndoe,https://github.com/johndoe").
     -H --help                           Show this screen.
     -V --version                        Show version.
 
