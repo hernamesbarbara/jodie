@@ -46,7 +46,7 @@ Options:
     -T TITLE --title=TITLE              Job title.
     -X TEXT  --text=TEXT                Text for jodie to try her best to parse semi-intelligently if she can.
     -U NAME --full-name=NAME            Full name.
-    -W WEBSITE --website=WEBSITE        Website / URL.
+    -W WEBSITES --websites=WEBSITES        Website / URL.
     -H --help                           Show this screen.
     -V --version                        Show version.
 
@@ -64,7 +64,7 @@ jodie-cli new \
     --last doe99 \
     --company "AcmeCo Inc" \
     --title "Founder" \
-    --website "https://example.com" \
+    --websites "https://linkedin.com/in/johndoe,https://github.com/johndoe,https://example.com" \
     --phone "+1 555 555 5555"
 
 ```
@@ -78,7 +78,7 @@ jodie-cli new \
     --full-name "john999 doe999" \
     --company "AcmeCo Inc" \
     --title "Founder" \
-    --website "https://example.com" \
+    --websites "https://linkedin.com/in/johndoe,https://github.com/johndoe,https://example.com" \
     --note "this is my horse."
 
 ```

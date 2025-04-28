@@ -143,3 +143,4 @@ tmp/
 .tmp/
 poetry.lock
 pyinstaller/
+TODO.txt

@@ -32,11 +32,14 @@ def detect_argument_mode(args):
 
 def parse_auto(arguments):
     detected_fields = {
-        "name": None,
+        "first_name": None,
+        "last_name": None,
         "email": None,
+        "phone": None,
+        "job_title": None,
         "company": None,
-        "website": None,
-        "title": None
+        "websites": None,
+        "note": None
     }
 
     for arg in arguments:
@@ -46,17 +49,18 @@ def parse_auto(arguments):
             if email:
                 detected_fields["email"] = email
                 # Infer name from mailbox format if name is not already set
-                if not detected_fields["name"]:
+                if not detected_fields["first_name"]:
                     first_name, last_name = jodie.parsers.NameParser.parse(arg)
                     if first_name or last_name:
-                        detected_fields["name"] = f"{first_name} {last_name}".strip()
+                        detected_fields["first_name"] = first_name
+                        detected_fields["last_name"] = last_name
                 continue
 
         # Check for website.
-        if not detected_fields["website"]:
+        if not detected_fields["websites"]:
             website = jodie.parsers.WebsiteParser.parse(arg)
             if website:
-                detected_fields["website"] = website
+                detected_fields["websites"] = website
                 continue
 
         # Check for company only if it's not already set.
@@ -66,17 +70,18 @@ def parse_auto(arguments):
                 continue
 
         # Check for title only if it's not already set.
-        if not detected_fields["title"]:
+        if not detected_fields["job_title"]:
             title = jodie.parsers.TitleParser.parse(arg)
             if title:
-                detected_fields["title"] = title
+                detected_fields["job_title"] = title
                 continue
 
         # Check for name only if it's not already set.
-        if not detected_fields["name"]:
+        if not detected_fields["first_name"]:
             first_name, last_name = jodie.parsers.NameParser.parse(arg)
             if first_name or last_name:
-                detected_fields["name"] = f"{first_name} {last_name}".strip()
+                detected_fields["first_name"] = first_name
+                detected_fields["last_name"] = last_name
                 continue
 
         # Fallback for unclassified arguments.
@@ -90,7 +95,7 @@ def parse_auto(arguments):
 
 
 def main():
-    first, last, email, phone, title, company, website, note = (None,) * 8
+    first, last, email, phone, title, company, websites, note = (None,) * 8
 
     args = docopt(__doc__, version=__version__)
     mode = detect_argument_mode(args)
@@ -98,16 +103,19 @@ def main():
     if mode == "auto":
         fields = parse_auto(args['TEXT'])
         if fields:
-            if fields.get('name'):
-                human_name = HumanName(fields['name'])
+            if fields.get('first_name'):
+                human_name = HumanName(f"{fields['first_name']} {fields['last_name']}".strip())
                 if human_name:
                     first, last = human_name.first, human_name.last
             
             email = fields.get('email')
             phone = fields.get('phone')
-            title = fields.get('title')
+            title = fields.get('job_title')
             company = fields.get('company')
-            website = fields.get('website')
+            websites = fields.get('websites')
+            if websites:
+                # Split the comma-separated list of websites
+                websites = [url.strip() for url in websites.split(',')]
             note = fields.get('note')
 
     if mode == "positional":
@@ -138,7 +146,10 @@ def main():
             phone = args.get('--phone')
             title = args.get('--title')
             company = args.get('--company')
-            website = args.get('--website')
+            websites = args.get('--websites')
+            if websites:
+                # Split the comma-separated list of websites
+                websites = [url.strip() for url in websites.split(',')]
             note = args.get('--note')
 
         except Exception as e:
@@ -152,7 +163,7 @@ def main():
         phone=phone,
         job_title=title,
         company=company,
-        website=website
+        websites=websites
         # note=note
     )
 

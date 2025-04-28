@@ -22,6 +22,8 @@ def parse_args(which=1):
             '--title': False,
             '--version': False,
             '--website': False,
+            '--websites': False,
+            '--note': False,
             'EMAIL': None,
             'NAME': [],
             'TEXT': 'john99 Doe9999 <john99.Doe9999@Gmail.com>'
@@ -40,6 +42,8 @@ def parse_args(which=1):
             '--title': False,
             '--version': False,
             '--website': False,
+            '--websites': False,
+            '--note': False,
             'EMAIL': 'john99.Doe9999@Gmail.com',
             'NAME': ['john99', 'doe9999'],
             'TEXT': None
@@ -54,7 +58,7 @@ def parse_args(which=1):
 # print(jodie.parsers.NameParser.parse(f"this is random text {raw_text}"))
 
 # data = parse_args()
-# first, last, email, phone, title, company, website = data.values()
+# first, last, email, phone, title, company, websites = data.values()
 
 args = parse_args(1)
 

@@ -27,7 +27,7 @@ Options:
     -P PHONE --phone=PHONE              Phone.
     -T TITLE --title=TITLE              Job title.
     -X TEXT  --text=TEXT                Text for jodie to try her best to parse semi-intelligently if she can.    
-    -W WEBSITE --website=WEBSITE        Website / URL.
+    -W WEBSITES --websites=WEBSITES     Comma-separated list of websites/URLs (e.g. "https://linkedin.com/in/johndoe,https://github.com/johndoe").
     -H --help                           Show this screen.
     -V --version                        Show version.
 

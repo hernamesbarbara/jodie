@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # jodie/contact/contact.py
 from datetime import datetime
-from typing import Optional, Set, List, Any
+from typing import Optional, Set, List, Any, Union, Dict
 import objc
 from Contacts import (CNMutableContact, CNContactStore, CNSaveRequest, CNLabeledValue,
                       CNPhoneNumber, CNLabelURLAddressHomePage)
@@ -102,6 +102,13 @@ def get_label_for_website(url: str, email: Optional[str] = None, company: Option
     return CNLabelURLAddressHomePage
 
 
+class WebsiteLabeledValue(CNLabeledValue):
+    """Wrapper for CNLabeledValue that provides a better string representation."""
+    
+    def __repr__(self) -> str:
+        return f"Website(label={self.label()!r}, url={self.value()!r})"
+
+
 class Contact:
     """
     Simple wrapper for Apple iOS / macOS Contact record.
@@ -116,7 +123,7 @@ class Contact:
         phone: Optional[str] = None,
         job_title: Optional[str] = None,
         company: Optional[str] = None,
-        website: Optional[str] = None,
+        websites: Optional[Union[str, List[str], List[Dict[str, str]], List[CNLabeledValue]]] = None,
         note: Optional[str] = None
     ) -> None:
         """
@@ -129,7 +136,7 @@ class Contact:
             phone: Phone number of the contact
             job_title: Job title of the contact
             company: Company name of the contact
-            website: Website URL of the contact
+            websites: Website URL(s) of the contact (can be a single URL string, list of URLs, or list of dicts with 'label' and 'url' keys)
             note: Additional notes for the contact
         """
         self.contact: CNMutableContact = CNMutableContact.new()
@@ -145,8 +152,8 @@ class Contact:
             self.job_title = job_title.strip()
         if company and company.strip():
             self.company = company.strip()
-        if website and website.strip():
-            self.website = website.strip()
+        if websites:
+            self.websites = websites
         
         # TODO this is broken until i can figure out Apple entitlements
         # TODO https://developer.apple.com/documentation/contacts/requesting-authorization-to-access-contacts
@@ -197,16 +204,26 @@ class Contact:
         return self
 
     def __str__(self) -> str:
+        websites = self.websites
+        if websites:
+            website_str = ", ".join(f"{site.label()}: {site.value()}" for site in websites)
+        else:
+            website_str = "None"
         return (f"Contact: {self.first_name} {self.last_name}, "
                 f"Email: {self.email}, Phone: {self.phone}, "
                 f"Job Title: {self.job_title}, Company: {self.company}, "
-                f"Website: {self.website}")
+                f"Websites: {website_str}")
 
     def __repr__(self) -> str:
+        websites = self.websites
+        if websites:
+            website_repr = f"[{', '.join(f'{site.label()}: {site.value()}' for site in websites)}]"
+        else:
+            website_repr = "None"
         return (f"{self.__class__.__name__}(first_name={self.first_name!r}, "
                 f"last_name={self.last_name!r}, email={self.email!r}, "
                 f"phone={self.phone!r}, job_title={self.job_title!r}, "
-                f"company={self.company!r}, website={self.website!r})")
+                f"company={self.company!r}, websites={website_repr})")
 
     @property
     def first_name(self) -> Optional[str]:
@@ -285,20 +302,89 @@ class Contact:
         self.contact.setOrganizationName_(value.strip().title())
 
     @property
-    def website(self) -> Optional[str]:
-        """Get the contact's website URL."""
+    def websites(self) -> Optional[List[WebsiteLabeledValue]]:
+        """Get all websites as a list of WebsiteLabeledValue objects."""
         urlAddresses: List[CNLabeledValue] = self.contact.urlAddresses()
-        return urlAddresses[0].value() if urlAddresses else None
+        if not urlAddresses:
+            return None
+        return [WebsiteLabeledValue.alloc().initWithLabel_value_(site.label(), site.value()) for site in urlAddresses]
 
-    @website.setter
-    def website(self, value: str) -> None:
-        """Set the contact's website URL with appropriate label based on the URL content, email, and company."""
-        if value:
-            websiteValue: CNLabeledValue = CNLabeledValue.alloc().initWithLabel_value_(
-                get_label_for_website(value, self.email, self.company), value.strip().lower())
-            self.contact.setUrlAddresses_([websiteValue])
-        else:
+    @websites.setter
+    def websites(self, value: Union[str, List[str], List[Dict[str, str]], List[CNLabeledValue]]) -> None:
+        """Set websites. Can handle:
+        - Single URL string
+        - List of URL strings
+        - List of dicts with 'label' and 'url' keys
+        - List of CNLabeledValue objects
+        """
+        if not value:
             self.contact.setUrlAddresses_([])
+            return
+
+        # Convert to list of CNLabeledValue objects
+        if isinstance(value, str):
+            label = get_label_for_website(value, self.email, self.company)
+            value = [CNLabeledValue.alloc().initWithLabel_value_(label, value.strip().lower())]
+        elif isinstance(value, list):
+            if not value:
+                self.contact.setUrlAddresses_([])
+                return
+                
+            if isinstance(value[0], str):
+                # List of strings
+                url_values = []
+                for url in value:
+                    label = get_label_for_website(url, self.email, self.company)
+                    url_value = CNLabeledValue.alloc().initWithLabel_value_(
+                        label, url.strip().lower())
+                    url_values.append(url_value)
+                value = url_values
+            elif isinstance(value[0], dict):
+                # List of dicts
+                url_values = []
+                for item in value:
+                    url = item["url"]
+                    label = item.get("label") or get_label_for_website(url, self.email, self.company)
+                    url_value = CNLabeledValue.alloc().initWithLabel_value_(
+                        label, url.strip().lower())
+                    url_values.append(url_value)
+                value = url_values
+            # If it's already a list of CNLabeledValue objects, use it as is
+
+        self.contact.setUrlAddresses_(value)
+
+    def add_website(self, url: str, label: Optional[str] = None) -> None:
+        """Add a single website with optional label."""
+        current = self.websites or []
+        if not label:
+            label = get_label_for_website(url, self.email, self.company)
+        websiteValue = CNLabeledValue.alloc().initWithLabel_value_(
+            label, url.strip().lower())
+        current.append(websiteValue)
+        self.contact.setUrlAddresses_(current)
+
+    def get_website(self, label: str) -> Optional[str]:
+        """Get a specific website by its label."""
+        websites = self.websites
+        if not websites:
+            return None
+        for site in websites:
+            if site.label() == label:
+                return site.value()
+        return None
+
+    # Convenience properties for common website types
+    @property
+    def linkedin(self) -> Optional[str]:
+        return self.get_website("LinkedIn")
+
+    @property
+    def work_website(self) -> Optional[str]:
+        return self.get_website("Work")
+
+    @property
+    def home_website(self) -> Optional[str]:
+        return self.get_website(CNLabelURLAddressHomePage)
 
     @property
     def note(self) -> Optional[str]:
@@ -328,7 +414,13 @@ class Contact:
                  Created date is formatted as YYYY-MM-DD.
         """
         def get_value_or_none(value):
-            return value if value and value.strip() else None
+            if value is None:
+                return None
+            if isinstance(value, str):
+                return value if value.strip() else None
+            if isinstance(value, list):
+                return [{"label": item.label(), "url": item.value()} for item in value] if value else None
+            return value
 
         return {
             'first_name': get_value_or_none(self.first_name),
@@ -337,7 +429,7 @@ class Contact:
             'phone': get_value_or_none(self.phone),
             'job_title': get_value_or_none(self.job_title),
             'company': get_value_or_none(self.company),
-            'website': get_value_or_none(self.website),
+            'websites': get_value_or_none(self.websites),
             'note': get_value_or_none(self.note),
             'created_date': self._created_date.strftime('%Y-%m-%d')
         }
@@ -407,7 +499,7 @@ def test_website_labels():
         phone="+1-555-123-4567",
         job_title="Software Engineer",
         company="Acme Corp",
-        website="https://acme.com",
+        websites="https://acme.com",
         note="Met at conference"
     )
     
