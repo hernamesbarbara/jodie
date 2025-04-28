@@ -8,4 +8,10 @@ from jodie.parsers.parsers import (
     TitleParser
 )
 
-__all__ = ("BaseParser", "EmailParser", "NameParser", "WebsiteParser", "TitleParser")
+__all__ = (
+    "BaseParser", 
+    "EmailParser", 
+    "NameParser", 
+    "WebsiteParser", 
+    "TitleParser"
+)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# jodie/parsers/baseparser.py
+# jodie/parsers/parsers.py
 import re
 from nameparser import HumanName
 
