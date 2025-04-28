@@ -57,7 +57,9 @@ Options:
 #### Save a new Contact to macOS Address Book / Contacts.app
 
 
-##### Example 1 
+##### Examples
+
+Pass arguments explicitly like this:
 
 ```
 jodie-cli new \
@@ -72,15 +74,18 @@ jodie-cli new \
 ```
 
 
-##### Example 2
+Or use the `--auto` flag and Jodie will assign various arguments to the right field in Apple's Contacts.app record.
 
 ```
-jodie-cli new \
-    --email "john99.doe99@gmail.com" \
-    --full-name "john999 doe999" \
-    --company "AcmeCo Inc" \
-    --title "Founder" \
-    --websites "https://linkedin.com/in/johndoe,https://github.com/johndoe,https://example.com" \
-    --note "this is my horse."
+jodie-cli new --auto \
+    "john99.doe99@gmail.com" \
+    "John Q. Doe" \
+    "CEO" \
+    "AcmeCo Inc" \
+    "https://www.linkedin.com/in/johnqdoe99/" \
+    "https://www.example.io/"
+
+# Saving...
+# Contact: John Doe, Email: john99.doe99@gmail.com, Phone: None, Job Title: Ceo, Company: Acmeco Inc, Websites: LinkedIn: https://www.linkedin.com/in/johnqdoe99/, _$!<HomePage>!$_: https://www.example.io/
 
 ```
