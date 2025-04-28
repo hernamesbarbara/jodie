@@ -38,7 +38,7 @@ def parse_auto(arguments):
         "phone": None,
         "job_title": None,
         "company": None,
-        "websites": None,
+        "websites": [],
         "note": None
     }
 
@@ -56,17 +56,29 @@ def parse_auto(arguments):
                         detected_fields["last_name"] = last_name
                 continue
 
-        # Check for website.
-        if not detected_fields["websites"]:
-            website = jodie.parsers.WebsiteParser.parse(arg)
-            if website:
-                detected_fields["websites"] = website
-                continue
+        # Check for website - we want to collect all URLs
+        website = jodie.parsers.WebsiteParser.parse(arg)
+        if website:
+            if not detected_fields["websites"]:
+                detected_fields["websites"] = []
+            detected_fields["websites"].append(website)
+            continue
 
-        # Check for company only if it's not already set.
+        # Check for company - look for business-related terms or if it matches a website domain
         if not detected_fields["company"]:
-            if "inc" in arg.lower() or "llc" in arg.lower():
+            # Check for business-related terms
+            if any(term in arg.lower() for term in ["inc", "llc", "ltd", "corp", "co"]):
                 detected_fields["company"] = arg.strip()
+                continue
+            
+            # Check if this matches any of the collected website domains
+            if detected_fields["websites"]:
+                for url in detected_fields["websites"]:
+                    domain = url.split("//")[-1].split("/")[0].lower()
+                    if arg.lower() in domain or domain in arg.lower():
+                        detected_fields["company"] = arg.strip()
+                        break
+            if detected_fields["company"]:
                 continue
 
         # Check for title only if it's not already set.
@@ -84,12 +96,9 @@ def parse_auto(arguments):
                 detected_fields["last_name"] = last_name
                 continue
 
-        # Fallback for unclassified arguments.
+        # If we get here and still don't have a company, this might be the company name
         if not detected_fields["company"]:
-            detected_fields["company"] = arg
-        else:
-            print(f"Unclassified argument: {arg}")  # Log for debugging.
-            detected_fields["company"] = 'JODIE: UNK'
+            detected_fields["company"] = arg.strip()
 
     return detected_fields
 
@@ -112,10 +121,7 @@ def main():
             phone = fields.get('phone')
             title = fields.get('job_title')
             company = fields.get('company')
-            websites = fields.get('websites')
-            if websites:
-                # Split the comma-separated list of websites
-                websites = [url.strip() for url in websites.split(',')]
+            websites = fields.get('websites')  # This is already a list from parse_auto
             note = fields.get('note')
 
     if mode == "positional":
@@ -147,8 +153,8 @@ def main():
             title = args.get('--title')
             company = args.get('--company')
             websites = args.get('--websites')
-            if websites:
-                # Split the comma-separated list of websites
+            if websites and isinstance(websites, str):
+                # Only split if it's a string (from command line)
                 websites = [url.strip() for url in websites.split(',')]
             note = args.get('--note')
 
