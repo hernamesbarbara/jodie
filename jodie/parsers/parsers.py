@@ -53,31 +53,94 @@ class EmailParser(BaseParser):
 
 
 class TitleParser(BaseParser):
-    # Extend COMMON_TITLES with dataset insights
+    # Common job titles and their variations
     COMMON_TITLES = {
-        "ceo", "cto", "co-founder", "founder", "director", "manager", "engineer",
-        "president", "vice-president", "consultant", "advisor", "chief",
-        "specialist", "developer", "partner", "head", "lead", "co-ceo"
+        # C-level
+        "ceo", "cto", "cfo", "coo", "chief executive officer", "chief technology officer",
+        "chief financial officer", "chief operating officer",
+        
+        # Founder/Leadership
+        "founder", "co-founder", "cofounder", "president", "vice president", "vp",
+        "director", "head", "lead", "principal",
+        
+        # Engineering
+        "engineer", "developer", "architect", "scientist", "researcher",
+        "software engineer", "senior engineer", "staff engineer", "full stack engineer",
+        "senior full stack engineer", "senior software engineer",
+        
+        # Management
+        "manager", "supervisor", "coordinator", "specialist", "analyst",
+        "project manager", "product manager", "program manager",
+        
+        # Business
+        "consultant", "advisor", "partner", "associate", "representative",
+        "business development", "sales", "marketing",
+        
+        # Academic
+        "professor", "lecturer", "researcher", "fellow", "scholar",
+        
+        # Creative
+        "designer", "artist", "writer", "editor", "producer",
+        
+        # Other
+        "intern", "assistant", "coordinator", "specialist"
+    }
+
+    # Acronyms that should stay uppercase
+    ACRONYMS = {"CEO", "CTO", "CFO", "COO", "VP"}
+
+    # Common title prefixes
+    PREFIXES = {
+        "senior", "lead", "principal", "staff", "associate", "junior",
+        "full stack", "front end", "back end", "full-stack", "front-end", "back-end"
     }
 
     @classmethod
     def parse(cls, text):
         """
         Enhanced title parsing:
-        - Standardizes capitalization for common titles.
+        - Standardizes capitalization for common titles
+        - Handles variations and compound titles
+        - Returns None for non-title text
+        - Preserves acronym case (e.g., CEO stays as CEO)
         """
         if not isinstance(text, str) or not text.strip():
             return None
 
-        # Normalize text
+        # Normalize text for comparison
         cleaned_text = text.strip().lower()
-
-        # Match against common titles
+        
+        # Direct match against common titles
         if cleaned_text in cls.COMMON_TITLES:
-            return cleaned_text.upper()  # Standardize capitalization
+            # Preserve original case for acronyms
+            if text.upper() in cls.ACRONYMS:
+                return text.upper()
+            # Preserve original case for the entire title
+            return text
+
+        # Check for compound titles with prefixes
+        words = cleaned_text.split()
+        if len(words) >= 2:
+            # First check if the entire phrase is a known title
+            if cleaned_text in cls.COMMON_TITLES:
+                return text
+            
+            # Then check for prefix + title combinations
+            for i in range(len(words)):
+                prefix = " ".join(words[:i+1])
+                if prefix in cls.PREFIXES:
+                    remaining = " ".join(words[i+1:])
+                    if remaining in cls.COMMON_TITLES:
+                        return text
+            
+            # Finally check if any part matches a known title
+            for i in range(len(words)):
+                for j in range(i + 1, len(words) + 1):
+                    phrase = " ".join(words[i:j])
+                    if phrase in cls.COMMON_TITLES:
+                        return text
 
         return None
-
 
 
 class WebsiteParser(BaseParser):

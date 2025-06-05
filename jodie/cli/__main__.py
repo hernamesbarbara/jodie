@@ -42,8 +42,9 @@ def parse_auto(arguments):
         "note": None
     }
 
+    # First pass: identify all fields that can be unambiguously determined
     for arg in arguments:
-        # Check for email first.
+        # 1. Email Address - Strong, unambiguous signal
         if not detected_fields["email"]:
             email = jodie.parsers.EmailParser.parse(arg)
             if email:
@@ -56,7 +57,7 @@ def parse_auto(arguments):
                         detected_fields["last_name"] = last_name
                 continue
 
-        # Check for website - we want to collect all URLs
+        # 2. Website URL - High-confidence markers
         website = jodie.parsers.WebsiteParser.parse(arg)
         if website:
             if not detected_fields["websites"]:
@@ -64,7 +65,31 @@ def parse_auto(arguments):
             detected_fields["websites"].append(website)
             continue
 
-        # Check for company - look for business-related terms or if it matches a website domain
+        # 3. Job Title - Common patterns, after ruling out email/URL
+        if not detected_fields["job_title"]:
+            title = jodie.parsers.TitleParser.parse(arg)
+            if title:
+                detected_fields["job_title"] = title
+                continue
+
+        # 4. Person Name - Often ambiguous without context
+        if not detected_fields["first_name"]:
+            first_name, last_name = jodie.parsers.NameParser.parse(arg)
+            if first_name or last_name:
+                detected_fields["first_name"] = first_name
+                detected_fields["last_name"] = last_name
+                continue
+
+    # Second pass: handle company name and any remaining fields
+    for arg in arguments:
+        # Skip if this argument was already used
+        if (arg == detected_fields["email"] or
+            arg in detected_fields["websites"] or
+            arg == detected_fields["job_title"] or
+            arg == f"{detected_fields['first_name']} {detected_fields['last_name']}".strip()):
+            continue
+
+        # 5. Company Name - Most ambiguous, use as fallback
         if not detected_fields["company"]:
             # Check for business-related terms
             if any(term in arg.lower() for term in ["inc", "llc", "ltd", "corp", "co"]):
@@ -81,24 +106,9 @@ def parse_auto(arguments):
             if detected_fields["company"]:
                 continue
 
-        # Check for title only if it's not already set.
-        if not detected_fields["job_title"]:
-            title = jodie.parsers.TitleParser.parse(arg)
-            if title:
-                detected_fields["job_title"] = title
-                continue
-
-        # Check for name only if it's not already set.
-        if not detected_fields["first_name"]:
-            first_name, last_name = jodie.parsers.NameParser.parse(arg)
-            if first_name or last_name:
-                detected_fields["first_name"] = first_name
-                detected_fields["last_name"] = last_name
-                continue
-
-        # If we get here and still don't have a company, this might be the company name
-        if not detected_fields["company"]:
-            detected_fields["company"] = arg.strip()
+            # If we get here and still don't have a company, this might be the company name
+            if not detected_fields["company"]:
+                detected_fields["company"] = arg.strip()
 
     return detected_fields
 

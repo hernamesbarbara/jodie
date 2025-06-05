@@ -132,6 +132,7 @@ class Contact:
     ) -> None:
         """
         Initialize a Contact object with optional parameters for various contact fields.
+        Empty or whitespace-only values will be treated as None and not set.
 
         Args:
             first_name: First name of the contact
@@ -140,30 +141,20 @@ class Contact:
             phone: Phone number of the contact
             job_title: Job title of the contact
             company: Company name of the contact
-            websites: Website URL(s) of the contact (can be a single URL string, list of URLs, or list of dicts with 'label' and 'url' keys)
+            websites: Website URL(s) of the contact
             note: Additional notes for the contact
         """
-        self.contact: CNMutableContact = CNMutableContact.new()
-        if first_name and first_name.strip():
-            self.first_name = first_name.strip()
-        if last_name and last_name.strip():
-            self.last_name = last_name.strip()
-        if email and email.strip():
-            self.email = email.strip()
-        if phone and phone.strip():
-            self.phone = phone.strip()
-        if job_title and job_title.strip():
-            self.job_title = job_title.strip()
-        if company and company.strip():
-            self.company = company.strip()
-        if websites:
-            self.websites = websites
+        self.contact: CNMutableContact = CNMutableContact.alloc().init()
         
-        # TODO this is broken until i can figure out Apple entitlements
-        # TODO https://developer.apple.com/documentation/contacts/requesting-authorization-to-access-contacts
-        # TODO https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_developer_contacts_notes
-        if note and note.strip():
-            self.note = note.strip()
+        # Convert empty strings to None
+        self.first_name = first_name if first_name and first_name.strip() else None
+        self.last_name = last_name if last_name and last_name.strip() else None
+        self.email = email
+        self.phone = phone
+        self.job_title = job_title if job_title and job_title.strip() else None
+        self.company = company
+        self.websites = websites
+        self.note = note
 
         # Apple Contacts.app doesnt display created date by default
         # save the created date in a custom field
@@ -208,15 +199,37 @@ class Contact:
         return self
 
     def __str__(self) -> str:
-        websites = self.websites
-        if websites:
-            website_str = ", ".join(f"{site.label()}: {site.value()}" for site in websites)
+        """String representation of the contact, showing only set fields."""
+        fields = []
+        
+        # Name
+        name_parts = []
+        if self.first_name:
+            name_parts.append(self.first_name)
+        if self.last_name:
+            name_parts.append(self.last_name)
+        fields.append(f"Contact: {' '.join(name_parts)}" if name_parts else "Contact: Unknown")
+        
+        # Email
+        fields.append(f"Email: {self.email}" if self.email else "Email: None")
+        
+        # Phone
+        fields.append(f"Phone: {self.phone}" if self.phone else "Phone: None")
+        
+        # Job Title
+        fields.append(f"Job Title: {self.job_title}" if self.job_title else "Job Title: None")
+        
+        # Company
+        fields.append(f"Company: {self.company}" if self.company else "Company: None")
+        
+        # Websites
+        if self.websites:
+            website_str = ", ".join(f"{site.label()}: {site.value()}" for site in self.websites)
+            fields.append(f"Websites: {website_str}")
         else:
-            website_str = "None"
-        return (f"Contact: {self.first_name} {self.last_name}, "
-                f"Email: {self.email}, Phone: {self.phone}, "
-                f"Job Title: {self.job_title}, Company: {self.company}, "
-                f"Websites: {website_str}")
+            fields.append("Websites: None")
+            
+        return ", ".join(fields)
 
     def __repr__(self) -> str:
         websites = self.websites
@@ -232,22 +245,14 @@ class Contact:
     @property
     def first_name(self) -> Optional[str]:
         """Get the contact's first name."""
-        return self.contact.givenName()
-
-    @first_name.setter
-    def first_name(self, value: str) -> None:
-        """Set the contact's first name."""
-        self.contact.setGivenName_(value.strip().title())
+        val = self.contact.givenName()
+        return val.strip() if val and val.strip() else None
 
     @property
     def last_name(self) -> Optional[str]:
         """Get the contact's last name."""
-        return self.contact.familyName()
-
-    @last_name.setter
-    def last_name(self, value: str) -> None:
-        """Set the contact's last name."""
-        self.contact.setFamilyName_(value.strip().title())
+        val = self.contact.familyName()
+        return val.strip() if val and val.strip() else None
 
     @property
     def email(self) -> Optional[str]:
@@ -256,10 +261,12 @@ class Contact:
         return emailAddresses[0].value() if emailAddresses else None
 
     @email.setter
-    def email(self, value: str) -> None:
-        """Set the contact's email address with appropriate label based on domain."""
-        email_label: str = get_label_for_email(value)
-        emailValue: CNLabeledValue = CNLabeledValue.alloc().initWithLabel_value_(
+    def email(self, value: Optional[str]) -> None:
+        if not value or not value.strip():
+            self.contact.setEmailAddresses_([])
+            return
+        email_label = get_label_for_email(value)
+        emailValue = CNLabeledValue.alloc().initWithLabel_value_(
             email_label, value.strip().lower())
         self.contact.setEmailAddresses_([emailValue])
 
@@ -270,40 +277,34 @@ class Contact:
         return phoneNumbers[0].value().stringValue() if phoneNumbers else None
 
     @phone.setter
-    def phone(self, value: str) -> None:
-        """Set the contact's phone number with mobile label."""
-        cleaned_number: str = ''.join(
-            ch for ch in value if ch.isdigit() or ch == '+')
-
-        label: str = "mobile"
-
-        phone_number: CNPhoneNumber = CNPhoneNumber.phoneNumberWithStringValue_(
-            cleaned_number)
-
-        phone_label_value: CNLabeledValue = CNLabeledValue.alloc().initWithLabel_value_(
-            label, phone_number)
-
+    def phone(self, value: Optional[str]) -> None:
+        if not value or not value.strip():
+            self.contact.setPhoneNumbers_([])
+            return
+        cleaned_number = ''.join(ch for ch in value if ch.isdigit() or ch == '+')
+        phone_number = CNPhoneNumber.phoneNumberWithStringValue_(cleaned_number)
+        phone_label_value = CNLabeledValue.alloc().initWithLabel_value_(
+            "mobile", phone_number)
         self.contact.setPhoneNumbers_([phone_label_value])
 
     @property
     def job_title(self) -> Optional[str]:
         """Get the contact's job title."""
-        return self.contact.jobTitle()
-
-    @job_title.setter
-    def job_title(self, value: str) -> None:
-        """Set the contact's job title."""
-        self.contact.setJobTitle_(value.strip().title())
+        val = self.contact.jobTitle()
+        return val.strip() if val and val.strip() else None
 
     @property
     def company(self) -> Optional[str]:
         """Get the contact's company name."""
-        return self.contact.organizationName()
+        val = self.contact.organizationName()
+        return val.strip() if val and val.strip() else None
 
     @company.setter
-    def company(self, value: str) -> None:
-        """Set the contact's company name."""
-        self.contact.setOrganizationName_(value.strip().title())
+    def company(self, value: Optional[str]) -> None:
+        if not value or not value.strip():
+            self.contact.setOrganizationName_(None)
+            return
+        self.contact.setOrganizationName_(value.strip())
 
     @property
     def websites(self) -> Optional[List[WebsiteLabeledValue]]:
@@ -407,12 +408,15 @@ class Contact:
         return self.contact.note()
 
     @note.setter
-    def note(self, value: str) -> None:
+    def note(self, value: Optional[str]) -> None:
         """Set the contact's notes.
         
         Note:
             This functionality is currently broken due to Apple entitlements requirements.
         """
+        if not value or not value.strip():
+            self.contact.setNote_(None)
+            return
         self.contact.setNote_(value.strip())
 
     def __dict__(self) -> dict:
@@ -454,6 +458,27 @@ class Contact:
                   with datetime objects converted to ISO format strings.
         """
         return self.__dict__()
+
+    @first_name.setter
+    def first_name(self, value: Optional[str]) -> None:
+        """Set first name."""
+        if not value or not value.strip():
+            value = None
+        self.contact.setGivenName_(value)
+
+    @last_name.setter
+    def last_name(self, value: Optional[str]) -> None:
+        """Set last name."""
+        if not value or not value.strip():
+            value = None
+        self.contact.setFamilyName_(value)
+
+    @job_title.setter
+    def job_title(self, value: Optional[str]) -> None:
+        """Set job title."""
+        if not value or not value.strip():
+            value = None
+        self.contact.setJobTitle_(value)
 
 def test_website_labels():
     test_cases = [
